@@ -1,0 +1,18 @@
+---
+- name: Install lsof
+  hosts: base-w-ts
+  become: true
+  tasks:
+    - name: Upgrade all apt packages
+      apt:
+        force_apt_get: yes
+        upgrade: dist
+      become: yes
+    - name: Install lsof
+      apt:
+        name: lsof
+        state: latest
+    - name: Install eza
+      apt:
+        name: eza
+        state: latest
