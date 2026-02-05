@@ -8,15 +8,30 @@
         force_apt_get: yes
         upgrade: dist
       become: yes
+
     - name: Install lsof
       apt:
         name: lsof
         state: latest
+
     - name: Install eza
       apt:
         name: eza
         state: latest
-    - name: bash_aliases
+
+    - name: Ensure .zshrc sources our .bash_aliases
       ansible.builtin.lineinfile:
         path: /home/sprite/.zshrc
         line: 'source ~/.bash_aliases'
+      tags:
+      - files
+
+    - name: Copy bash_aliases file with owner and permissions
+      ansible.builtin.copy:
+        src: ./bash_aliases
+        dest: /home/sprite/.bash_aliases
+        owner: sprite
+        group: sprite
+        mode: '0600'
+      tags:
+      - files
