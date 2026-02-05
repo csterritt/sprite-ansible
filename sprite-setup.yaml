@@ -1,5 +1,5 @@
 ---
-- name: Install lsof
+- name: Set up base-w-ts sprite
   hosts: base-w-ts
   become: true
   tasks:
@@ -16,3 +16,7 @@
       apt:
         name: eza
         state: latest
+    - name: bash_aliases
+      ansible.builtin.lineinfile:
+        path: /home/sprite/.zshrc
+        line: 'source ~/.bash_aliases'
