@@ -8,21 +8,34 @@
         force_apt_get: yes
         upgrade: dist
       become: yes
+      tags:
+      - apps
 
     - name: Install lsof
       apt:
         name: lsof
         state: latest
+      tags:
+      - apps
 
     - name: Install eza
       apt:
         name: eza
         state: latest
+      tags:
+      - apps
 
     - name: Install atuin
       apt:
         name: atuin
         state: latest
+      tags:
+      - apps
+
+    - name: Install tirith
+      ansible.builtin.shell: /.sprite/bin/npm install -g tirith
+      tags:
+      - apps
 
     - name: Ensure .zshrc sources our .bash_aliases
       ansible.builtin.lineinfile:
@@ -37,6 +50,14 @@
         line: 'eval "$(atuin init zsh)"'
       tags:
       - files
+
+    - name: Ensure .zshrc sets up tirith
+      ansible.builtin.lineinfile:
+        path: /home/sprite/.zshrc
+        line: 'eval "$(tirith init --shell zsh)"'
+      tags:
+      - files
+      - new
 
     - name: Copy bash_aliases file with owner and permissions
       ansible.builtin.copy:
