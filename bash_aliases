@@ -21,7 +21,8 @@ alias t2='tail -20'
 alias t3='tail -30'
 alias t4='tail -40'
 alias trc="tr : '\012'"
-alias get_dev='git checkout -b dev origin/dev && git pull'
+alias getdev='git checkout -b dev origin/dev && git pull'
 alias psa='ps auxwww'
+alias chk3k='lsof -ti:3000'
 
 export LESS='-RMIX'
