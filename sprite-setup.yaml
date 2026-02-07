@@ -1,6 +1,6 @@
 ---
-- name: Set up base-w-ts sprite
-  hosts: base-w-ts
+- name: Set up new-sprite sprite
+  hosts: new-sprite
   become: true
   tasks:
     - name: Upgrade all apt packages
@@ -34,6 +34,21 @@
 
     - name: Install tirith
       ansible.builtin.shell: /.sprite/bin/npm install -g tirith
+      tags:
+      - apps
+
+    - name: Install mailpit
+      ansible.builtin.shell: curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh> /tmp/mailpit_install.sh && sudo sh < /tmp/mailpit_install.sh && rm -f /tmp/mailpit_install.sh
+      tags:
+      - apps
+
+    - name: Install notify-apps
+      ansible.builtin.copy:
+        src: /Users/chris/hacks/notifier/notify-app/tmp/notify-app
+        dest: /home/sprite/notify-app
+        owner: sprite
+        group: sprite
+        mode: '0700'
       tags:
       - apps
 
