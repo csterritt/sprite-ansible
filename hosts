@@ -1,1 +1,1 @@
-new-sprite ansible_host=100.74.20.87 ansible_user=sprite ansible_port=22
+new-sprite ansible_host=100.127.244.49 ansible_user=sprite ansible_port=22

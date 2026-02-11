@@ -42,7 +42,7 @@
       tags:
       - apps
 
-    - name: Install notify-apps
+    - name: Install notify-app
       ansible.builtin.copy:
         src: /Users/chris/hacks/notifier/notify-app/tmp/notify-app
         dest: /home/sprite/notify-app
@@ -72,7 +72,6 @@
         line: 'eval "$(tirith init --shell zsh)"'
       tags:
       - files
-      - new
 
     - name: Copy bash_aliases file with owner and permissions
       ansible.builtin.copy:
@@ -83,3 +82,36 @@
         mode: '0600'
       tags:
       - files
+
+    - name: Set up line-of-time-api
+      ansible.builtin.shell: git clone https://github.com/csterritt/line-of-time-api.git
+      tags:
+      - lot
+
+    - name: Fix ownership of line-of-time-api
+      ansible.builtin.shell: sudo chown -R sprite:sprite /home/sprite/line-of-time-api
+      tags:
+      - lot
+
+    - name: Switch git branch for line-of-time-api
+      ansible.builtin.shell: cd /home/sprite/line-of-time-api && git checkout -b dev origin/dev && git pull
+      tags:
+      - lot
+
+    - name: Set up line-of-time-api's .dev.vars.all
+      ansible.builtin.shell: cp /home/sprite/line-of-time-api/.dev.vars.all.template /home/sprite/line-of-time-api/.dev.vars.all
+      tags:
+      - lot
+
+    - name: Ensure .dev.vars.all has the proper DB id
+      ansible.builtin.lineinfile:
+        path: /home/sprite/line-of-time-api/.dev.vars.all
+        regexp: '^CLOUDFLARE_DATABASE_ID='
+        line: CLOUDFLARE_DATABASE_ID='607b4c0f-122a-40e0-9053-9693451c3298'
+      tags:
+      - lot
+
+    - name: Set up line-of-time-api's dependencies
+      ansible.builtin.shell: cd /home/sprite/line-of-time-api && /.sprite/bin/npm install && cd line-of-time-fe && /.sprite/bin/npm install && /.sprite/bin/npm run build
+      tags:
+      - lot
