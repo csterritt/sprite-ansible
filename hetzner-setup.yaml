@@ -1,0 +1,276 @@
+---
+- hosts: new-hetzner
+  become: true
+
+  handlers:
+    # Note: Use 'sshd' for Red Hat and its derivatives.
+    - name: restart ssh
+      service: name=ssh state=restarted
+      tags:
+      - first
+
+  tasks:
+    - name: Update SSH configuration to be more secure.
+      lineinfile:
+        dest: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        state: present
+        validate: 'sshd -t -f %s'
+      with_items:
+        - regexp: "^PasswordAuthentication"
+          line: "PasswordAuthentication no"
+        - regexp: "^PubkeyAuthentication"
+          line: "PubkeyAuthentication yes"
+        # - regexp: "^PermitRootLogin"
+        #   line: "PermitRootLogin no"
+        # - regexp: "^Port"
+        #   line: "Port 2849"
+      notify: restart ssh
+      tags:
+      - first
+
+    # - name: Allow sshd to listen on tcp port 2849.
+    #   seport:
+    #     ports: 2849
+    #     proto: tcp
+    #     setype: ssh_port_t
+    #     state: present
+    # FIXME: this is not the new way to do conditionals
+    #   when: ansible_selinux.status == 'enabled'
+    #   tags:
+    #   - first
+
+    - name: Update and upgrade all apt packages
+      command: sudo apt update && sudo apt upgrade -y
+      tags:
+      - first
+
+    - name: Install zsh
+      apt:
+        name: zsh
+        state: latest
+      tags:
+      - first
+
+    - name: Install various utilities
+      command: apt install -y git curl wget apt-transport-https ca-certificates locales vim
+      tags:
+      - first
+
+    # User account configuration.
+    - name: Add a sudo-capable user.
+      user:
+        name: chris
+        state: present
+        shell: /usr/bin/zsh
+      tags:
+      - first
+
+    - name: Add sudo rights for chris.
+      lineinfile:
+        dest: /etc/sudoers
+        regexp: '^chris'
+        line: 'chris ALL=(ALL) NOPASSWD: ALL'
+        state: present
+        validate: 'visudo -cf %s'
+      tags:
+      - first
+
+    - name: Make chris's public ssh key directory
+      command: mkdir -p /home/chris/.ssh
+      tags:
+      - first
+
+    - name: Install chris's public ssh key
+      ansible.builtin.copy:
+        src: /Users/chris/.ssh/id_ed25519_chris_hetz.pub
+        dest: /home/chris/.ssh/authorized_keys
+        owner: chris
+        group: chris
+        mode: '0600'
+      tags:
+      - first
+
+    - name: Add a least-privilege user.
+      user:
+        name: helper
+        state: present
+        shell: /usr/bin/zsh
+      tags:
+      - first
+
+    - name: Make helper's public ssh key directory
+      command: mkdir -p /home/helper/.ssh
+      tags:
+      - first
+
+    - name: Install helper's public ssh key
+      ansible.builtin.copy:
+        src: /Users/chris/.ssh/id_ed25519_helper_hetz.pub
+        dest: /home/helper/.ssh/authorized_keys
+        owner: helper
+        group: helper
+        mode: '0600'
+      tags:
+      - first
+
+    - name: Remove unused packages.
+      package:
+        name:
+          - nano
+          - sendmail
+        state: absent
+        purge: yes
+      tags:
+      - first
+
+    # File permissions... Not there on startup?
+    # - name: Configure the permissions for the messages log.
+    #   file:
+    #     path: /var/log/messages
+    #     owner: root
+    #     group: root
+    #     mode: 0600
+    #   tags:
+    #   - first
+
+    # - name: Configure open ports with ufw.
+    #   ufw:
+    #     rule: "{{ item.rule }}"
+    #     port: "{{ item.port }}"
+    #     proto: "{{ item.proto }}"
+    #     from_ip: "{{ item.from_ip }}"
+    #   with_items:
+    #     # - { rule: 'allow', port: 2849, proto: 'tcp' }
+    #     - { rule: 'allow', port: 22, proto: 'tcp', from_ip: '50.219.220.181' }
+    #     - { rule: 'allow', port: 80, proto: 'tcp', from_ip: '50.219.220.181' }
+    #   tags:
+    #   - first
+
+    # - name: Configure default incoming/outgoing rules with ufw.
+    #   ufw:
+    #     direction: "{{ item.direction }}"
+    #     policy: "{{ item.policy }}"
+    #     state: enabled
+    #   with_items:
+    #     - { direction: outgoing, policy: allow }
+    #     - { direction: incoming, policy: deny }
+    #   tags:
+    #   - first
+
+    # - name: Install fail2ban (Debian).
+    #   command: apt install -y fail2ban
+    #   # apt:
+    #   #   name: fail2ban
+    #   #   state: present
+    #   tags:
+    #   - firstish
+
+    # - name: Ensure fail2ban is running and enabled on boot.
+    #   service:
+    #     name: fail2ban
+    #     state: started
+    #     enabled: yes
+    #   tags:
+    #   - firstish
+
+    - name: Install atuin
+      command: sudo snap install atuin
+      tags:
+      - apps
+
+    - name: Install nvm
+      command: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+      tags:
+      - apps
+
+    - name: Install node 22
+      command: source "$HOME/.nvm/nvm.sh" && nvm install 22
+      tags:
+      - apps
+
+    # - name: Install tirith
+    #   ansible.builtin.shell: /.chris/bin/npm install -g tirith
+    #   tags:
+    #   - apps
+
+    - name: Install mailpit
+      ansible.builtin.shell: curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh> /tmp/mailpit_install.sh && sudo sh < /tmp/mailpit_install.sh && rm -f /tmp/mailpit_install.sh
+      tags:
+      - apps
+
+    - name: Install notify-app
+      ansible.builtin.copy:
+        src: /Users/chris/hacks/notifier/notify-app/tmp/notify-app
+        dest: /home/chris/notify-app
+        owner: chris
+        group: chris
+        mode: '0700'
+      tags:
+      - apps
+
+    - name: Copy .zshrc file for chris with owner and permissions
+      ansible.builtin.copy:
+        src: ./basic_dot_zshrc
+        dest: /home/chris/.zshrc
+        owner: chris
+        group: chris
+        mode: '0600'
+      tags:
+      - files
+
+    - name: Copy .zshrc file for helper with owner and permissions
+      ansible.builtin.copy:
+        src: ./basic_dot_zshrc
+        dest: /home/helper/.zshrc
+        owner: helper
+        group: helper
+        mode: '0600'
+      tags:
+      - files
+
+    # - name: Ensure .zshrc sets up tirith
+    #   ansible.builtin.lineinfile:
+    #     path: /home/chris/.zshrc
+    #     line: 'eval "$(tirith init --shell zsh)"'
+    #   tags:
+    #   - files
+
+    - name: Copy bash_aliases file for chris with owner and permissions
+      ansible.builtin.copy:
+        src: ./bash_aliases
+        dest: /home/chris/.bash_aliases
+        owner: chris
+        group: chris
+        mode: '0600'
+      tags:
+      - files
+
+    - name: Copy bash_aliases file for helper with owner and permissions
+      ansible.builtin.copy:
+        src: ./bash_aliases
+        dest: /home/helper/.bash_aliases
+        owner: helper
+        group: helper
+        mode: '0600'
+      tags:
+      - files
+
+    # Use SELinux (Security-Enhanced Linux).
+    # - name: Install Python SELinux library.
+    #   dnf:
+    #     name: python3-libselinux
+    #     state: present
+
+    # - name: Ensure SELinux is enabled in `targeted` mode.
+    #   selinux:
+    #     policy: targeted
+    #     state: enforcing
+
+    # - name: Ensure httpd can connect to the network.
+    #   seboolean:
+    #     name: httpd_can_network_connect
+    #     state: yes
+    #     persistent: yes
+    #   when: ansible_selinux.status == 'enabled'

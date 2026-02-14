@@ -4,10 +4,7 @@
 
 - “ansible webservers -m apt -a "upgrade=dist update_cache=yes”
 
-Excerpt From
-Ansible for DevOps
-Jeff Geerling
-This material may be protected by copyright.
+Excerpt From "Ansible for DevOps" by Jeff Geerling
 
 ----
 
@@ -149,11 +146,117 @@ You need to investigate each reported file and either assign it to an appropriat
 ### Disable unused services
 
 You can disable unused services using the service command/systemctl command:
-    
+
     sudo systemctl stop service
     sudo systemctl disable service
 
 For example, if you are not going to use Nginx service for some time disable it:
-    
+
     sudo systemctl stop nginx
     sudo systemctl disable nginx
+
+----
+
+### Ansible variables
+
+    ---
+    - hosts: example
+
+      vars:
+        foo: bar
+
+      tasks:
+        # Prints "Variable 'foo' is set to bar".
+        - debug:
+            msg: "Variable 'foo' is set to {{ foo }}”
+
+    ---
+    # Main playbook file.
+    - hosts: example
+
+      vars_files:
+        - vars.yml
+
+      tasks:
+        - debug:
+            msg: "Variable 'foo' is set to {{ foo }}"
+
+    ---
+    # Variables file 'vars.yml' in the same folder as the playbook.
+    foo: bar
+
+Notice how the variables are all at the root level of the YAML file. They don’t need to be under any kind of vars heading when they are included as a standalone file.
+
+Variable files can also be imported conditionally. Say, for instance, you have one set of variables for your RHEL servers (where the Apache service is named httpd), and another for your Debian servers (where the Apache service is named apache2). In this case, you can conditionally include variables files using include_vars:
+
+    ---
+    - hosts: example
+
+    pre_tasks:
+        - include_vars: "{{ item }}"
+        with_first_found:
+            - "apache_{{ ansible_os_family }}.yml"
+            - "apache_default.yml"
+
+    tasks:
+        - name: Ensure Apache is running.
+        service:
+            name: "{{ apache_service_name }}"
+            state: started
+
+Then, add two files in the same folder as your example playbook, apache_RedHat.yml, and apache_default.yml. Define the variable apache_service_name: httpd in the RedHat file, and apache_service_name: apache2 in the default file.
+
+As long as you don’t disable gather_facts (or if you run a setup task at some point to gather facts manually), Ansible stores the OS of the server in the variable ansible_os_family, and will include the vars file with the resulting name. If ansible can’t find a file with that name, it will use the variables loaded from apache_default.yml.
+
+### Example shell commands
+
+    ---
+    - hosts: all
+      tasks:
+        - name: Install Apache.
+          command: dnf install --quiet -y httpd httpd-devel
+        - name: Copy configuration files.
+          command: >
+            cp httpd.conf /etc/httpd/conf/httpd.conf
+        - command: >
+            cp httpd-vhosts.conf /etc/httpd/conf/httpd-vhosts.conf
+        - name: Start Apache and configure it to run at boot.
+          command: service httpd start
+        - command: chkconfig httpd on
+
+The greater-than sign (>) immediately following the command: module directive tells YAML “automatically quote the next set of indented lines as one long string, with each line separated by a space”. It helps improve task readability in some cases. There are different ways of describing configuration using valid YAML syntax, see the book.
+
+Same as the above, but more idiomatic ansible, making it idempotent as well:
+
+    ---
+    - hosts: all
+      become: yes
+    
+      tasks:
+        - name: Install Apache.
+          dnf:
+            name:
+              - httpd
+              - httpd-devel
+            state: present
+
+        - name: Copy configuration files.
+          copy:
+            src: "{{ item.src }}"
+            dest: "{{ item.dest }}"
+            owner: root
+            group: root
+            mode: 0644
+          with_items:
+            - src: httpd.conf
+              dest: /etc/httpd/conf/httpd.conf
+            - src: httpd-vhosts.conf
+              dest: /etc/httpd/conf/httpd-vhosts.conf
+
+        - name: Make sure Apache is started now and at boot.
+          service:
+            name: httpd
+            state: started
+            enabled: yes
+
+Excerpts From "Ansible for DevOps" by Jeff Geerling.

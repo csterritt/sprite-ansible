@@ -1,1 +1,2 @@
-new-sprite ansible_host=100.127.244.49 ansible_user=sprite ansible_port=22
+new-sprite ansible_host=100.78.86.32 ansible_port=22 ansible_user=root
+# new-hetzner ansible_host=178.156.251.50 ansible_port=22 ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_ed25519_chris_hetz
