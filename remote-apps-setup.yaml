@@ -1,0 +1,92 @@
+---
+- name: Set up utmbox apps
+  hosts: utmbox
+  become: true
+  become_user: chris
+  vars:
+    brew_packages:
+      - git
+      - wget
+      - ripgrep
+      - gcc
+      - eza
+      - atuin
+      - mailpit
+      - lsof
+      - sqlite-utils
+      - nvm
+
+  tasks:
+    - name: Install notify-app
+      ansible.builtin.copy:
+        src: /Users/chris/hacks/notifier/notify-app/tmp/notify-app
+        dest: /home/chris/notify-app
+        owner: chris
+        group: chris
+        mode: '0700'
+      tags:
+      - apps
+    
+    - name: Install Homebrew packages
+      community.general.homebrew:
+        name: "{{ brew_packages }}"
+        state: present
+      # If you don't use FQCN and have the plugin installed, this can be just `homebrew:`
+
+    - name: Ensure .bashrc sets up homebrew paths
+      ansible.builtin.lineinfile:
+        path: /home/chris/.bashrc
+        line: 'export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"'
+      tags:
+      - files
+
+    - name: Make NVM directory
+      ansible.builtin.file:
+        path: /home/chris/.nvm
+        state: directory
+        owner: chris
+        group: chris
+        mode: '0755'
+      tags:
+      - files
+
+    - name: Ensure .bashrc sets up nvm
+      ansible.builtin.blockinfile:
+        path: /home/chris/.bashrc
+        append_newline: true
+        prepend_newline: true
+        block: |
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "/home/linuxbrew/.linuxbrew/opt/nvm/nvm.sh" ] && \. "/home/linuxbrew/.linuxbrew/opt/nvm/nvm.sh"  # This loads nvm
+          [ -s "/home/linuxbrew/.linuxbrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/home/linuxbrew/.linuxbrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
+      tags:
+      - files
+
+    # - name: Ensure .bashrc sets up atuin
+    #   ansible.builtin.lineinfile:
+    #     path: /home/chris/.bashrc
+    #     line: 'eval "$(atuin init bash)"'
+    #   tags:
+    #   - files
+
+    - name: Copy bash_aliases file with owner and permissions
+      ansible.builtin.copy:
+        src: ./bash_aliases
+        dest: /home/chris/.bash_aliases
+        owner: chris
+        group: chris
+        mode: '0600'
+      tags:
+      - files
+
+    - name: Install node via nvm
+      ansible.builtin.shell:
+        cmd: |
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "/home/linuxbrew/.linuxbrew/opt/nvm/nvm.sh" ] && \. "/home/linuxbrew/.linuxbrew/opt/nvm/nvm.sh"  # This loads nvm
+          [ -s "/home/linuxbrew/.linuxbrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/home/linuxbrew/.linuxbrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
+          nvm install v22.22.0
+          nvm alias default v22.22.0
+        creates: /home/chris/.nvm/versions/node/v$(node -v | cut -d'v' -f2)
+      tags:
+      - apps

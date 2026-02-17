@@ -1,0 +1,31 @@
+{
+	// Optional, but recommended for clarity
+	"tagOwners": {
+		"tag:devbox": ["autogroup:admin"], // only admins can tag a node as devbox
+	},
+
+	"acls": [
+		// Allow everyone in the tailnet to reach the dev box, all ports
+		{
+			"action": "accept",
+			"src":    ["autogroup:member"],
+			"dst":    ["tag:devbox:*"],
+		},
+
+		// NOTE: there is deliberately NO rule with src: ["tag:devbox"]
+		// so the dev box cannot initiate connections to any other tailnet node.
+	],
+
+	// If your existing policy has any broad rule like:
+	// { "action": "accept", "src": ["*"], "dst": ["*:*"] }
+	// remove or narrow it, or this devbox restriction will be bypassed.
+
+	"ssh": [
+		{
+			"action": "accept",
+			"src":    ["autogroup:member"], // or your user, e.g. "you@example.com"
+			"dst":    ["tag:devbox"],
+			"users":  ["autogroup:nonroot"], // or ["yourlocaluser"]
+		},
+	],
+}

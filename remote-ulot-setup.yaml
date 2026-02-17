@@ -3,45 +3,6 @@
   hosts: new-sprite
   become: true
   tasks:
-    - name: Upgrade all apt packages
-      apt:
-        force_apt_get: yes
-        upgrade: dist
-      become: yes
-      tags:
-      - apps
-
-    - name: Install lsof
-      apt:
-        name: lsof
-        state: latest
-      tags:
-      - apps
-
-    - name: Install eza
-      apt:
-        name: eza
-        state: latest
-      tags:
-      - apps
-
-    - name: Install atuin
-      apt:
-        name: atuin
-        state: latest
-      tags:
-      - apps
-
-    - name: Install tirith
-      ansible.builtin.shell: /.sprite/bin/npm install -g tirith
-      tags:
-      - apps
-
-    - name: Install mailpit
-      ansible.builtin.shell: curl -sL https://raw.githubusercontent.com/axllent/mailpit/develop/install.sh> /tmp/mailpit_install.sh && sudo sh < /tmp/mailpit_install.sh && rm -f /tmp/mailpit_install.sh
-      tags:
-      - apps
-
     - name: Install notify-app
       ansible.builtin.copy:
         src: /Users/chris/hacks/notifier/notify-app/tmp/notify-app
@@ -51,24 +12,36 @@
         mode: '0700'
       tags:
       - apps
+    
+  vars:
+    brew_packages:
+      - git
+      - wget
+      - ripgrep
+      - gcc
+      - eza
+      - atuin
+      - mailpit
+      - lsof
+      - sqlite-utils
 
-    - name: Ensure .zshrc sources our .bash_aliases
-      ansible.builtin.lineinfile:
-        path: /home/sprite/.zshrc
-        line: 'source ~/.bash_aliases'
-      tags:
-      - files
+  tasks:
+    - name: Install Homebrew packages
+      community.general.homebrew:
+        name: "{{ brew_packages }}"
+        state: present
+      # If you don't use FQCN and have the plugin installed, this can be just `homebrew:`
 
-    - name: Ensure .zshrc sets up atuin
+    - name: Ensure .bashrc sets up atuin
       ansible.builtin.lineinfile:
-        path: /home/sprite/.zshrc
+        path: /home/sprite/.bashrc
         line: 'eval "$(atuin init zsh)"'
       tags:
       - files
 
-    - name: Ensure .zshrc sets up tirith
+    - name: Ensure .bashrc sets up tirith
       ansible.builtin.lineinfile:
-        path: /home/sprite/.zshrc
+        path: /home/sprite/.bashrc
         line: 'eval "$(tirith init --shell zsh)"'
       tags:
       - files

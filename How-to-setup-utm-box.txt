@@ -1,0 +1,54 @@
+Setting up utmbox with UTM
+ISO in ~/ISOs
+
+Installed UTM app
+Downloaded ubuntu-24.04.4-live-server-arm64.iso from their link
+Started a new VM with 12G of ram, default processor count
+Chose ubuntu iso
+
+sudo apt update
+sudo apt upgrade -y
+sudo shutdown -r now
+
+sudo apt install spice-vdagent
+sudo apt install spice-webdavd
+sudo mkdir -p /mnt/utm
+sudo mount -t 9p -o trans=virtio,version=9p2000.L share /mnt/utm
+
+Ran, as me, from /mnt/utm:
+    sh /mnt/utm/install-homebrew
+    sh /mnt/utm/bash-path-for-brew
+    sh /mnt/utm/install-tailscale
+
+    Added contents of setup-mount-point to /etc/fstab
+
+------
+
+Set up tailscale to run at boot time.
+
+This was all up and running, so I was able to skip to the 'Sign in' part.
+
+First, verify that the Tailscale service is installed and recognized by systemd:
+    sudo systemctl status tailscaled
+
+If the service is installed, it will show its current status. To enable it at startup, run:
+    sudo systemctl enable tailscaled
+
+This command creates the necessary symbolic links so that the Tailscale daemon (`tailscaled`)
+launches at boot time. You can start the service immediately without rebooting by executing:
+    sudo systemctl start tailscaled
+
+Sign in:
+    sudo tailscale up
+
+After enabling the service, confirm it is active and running:
+    sudo systemctl is-active tailscaled
+
+Check the 'Machines' section on the tailscale admin page, make sure that the UTM box
+has 'tag:devbox', otherwise use its three-dots menu to add it.
+
+try ssh'ing in, if that doesn't work, try:
+
+    sudo tailscale set --ssh=false
+    ...try ssh...
+    sudo tailscale set --ssh=false
