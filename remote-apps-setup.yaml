@@ -5,16 +5,21 @@
   become_user: chris
   vars:
     brew_packages:
-      - git
-      - wget
-      - ripgrep
-      - gcc
-      - eza
       - atuin
-      - mailpit
+      - bun
+      - cloudflare-wrangler
+      - cloudflared
+      - eza
+      - gcc
+      - git
+      - jj
       - lsof
-      - sqlite-utils
+      - mailpit
       - nvm
+      - ripgrep
+      - sqlite
+      - sqlite-utils
+      - wget
 
   tasks:
     - name: Install notify-app
@@ -61,13 +66,6 @@
           [ -s "/home/linuxbrew/.linuxbrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/home/linuxbrew/.linuxbrew/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
       tags:
       - files
-
-    # - name: Ensure .bashrc sets up atuin
-    #   ansible.builtin.lineinfile:
-    #     path: /home/chris/.bashrc
-    #     line: 'eval "$(atuin init bash)"'
-    #   tags:
-    #   - files
 
     - name: Copy bash_aliases file with owner and permissions
       ansible.builtin.copy:
