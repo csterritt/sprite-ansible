@@ -1,90 +1,55 @@
 ---
-- name: Set up new-sprite sprite
-  hosts: new-sprite
+- name: Set up u-lot development on utmbox
+  hosts: utmbox
   become: true
+  become_user: chris
   tasks:
-    - name: Install notify-app
-      ansible.builtin.copy:
-        src: /Users/chris/hacks/notifier/notify-app/tmp/notify-app
-        dest: /home/sprite/notify-app
-        owner: sprite
-        group: sprite
-        mode: '0700'
-      tags:
-      - apps
-    
-  vars:
-    brew_packages:
-      - git
-      - wget
-      - ripgrep
-      - gcc
-      - eza
-      - atuin
-      - mailpit
-      - lsof
-      - sqlite-utils
-
-  tasks:
-    - name: Install Homebrew packages
-      community.general.homebrew:
-        name: "{{ brew_packages }}"
-        state: present
-      # If you don't use FQCN and have the plugin installed, this can be just `homebrew:`
-
-    - name: Ensure .bashrc sets up atuin
-      ansible.builtin.lineinfile:
-        path: /home/sprite/.bashrc
-        line: 'eval "$(atuin init zsh)"'
-      tags:
-      - files
-
-    - name: Ensure .bashrc sets up tirith
-      ansible.builtin.lineinfile:
-        path: /home/sprite/.bashrc
-        line: 'eval "$(tirith init --shell zsh)"'
-      tags:
-      - files
-
-    - name: Copy bash_aliases file with owner and permissions
-      ansible.builtin.copy:
-        src: ./bash_aliases
-        dest: /home/sprite/.bash_aliases
-        owner: sprite
-        group: sprite
-        mode: '0600'
-      tags:
-      - files
-
-    - name: Set up line-of-time-api
+    - name: Get line-of-time-api source
       ansible.builtin.shell: git clone https://github.com/csterritt/line-of-time-api.git
+      args:
+        creates: /home/chris/line-of-time-api
       tags:
       - lot
 
-    - name: Fix ownership of line-of-time-api
-      ansible.builtin.shell: sudo chown -R sprite:sprite /home/sprite/line-of-time-api
-      tags:
-      - lot
+    - name: Get line-of-time-api git branches
+      ansible.builtin.shell: git branch | egrep -i dev | wc -l
+      register: dev_branch_count
+      args:
+        chdir: /home/chris/line-of-time-api
+
+    - name: Debug dev branch count
+      debug:
+        msg: "Dev branch count: {{ dev_branch_count.stdout }}"
 
     - name: Switch git branch for line-of-time-api
-      ansible.builtin.shell: cd /home/sprite/line-of-time-api && git checkout -b dev origin/dev && git pull
+      ansible.builtin.shell: |
+        cd /home/chris/line-of-time-api && git checkout -b dev origin/dev && git pull
+      when: dev_branch_count.stdout | int == 0
       tags:
       - lot
 
     - name: Set up line-of-time-api's .dev.vars.all
-      ansible.builtin.shell: cp /home/sprite/line-of-time-api/.dev.vars.all.template /home/sprite/line-of-time-api/.dev.vars.all
+      ansible.builtin.shell: |
+        cp /home/chris/line-of-time-api/.dev.vars.all.template /home/chris/line-of-time-api/.dev.vars.all
       tags:
       - lot
 
     - name: Ensure .dev.vars.all has the proper DB id
       ansible.builtin.lineinfile:
-        path: /home/sprite/line-of-time-api/.dev.vars.all
+        path: /home/chris/line-of-time-api/.dev.vars.all
         regexp: '^CLOUDFLARE_DATABASE_ID='
         line: CLOUDFLARE_DATABASE_ID='607b4c0f-122a-40e0-9053-9693451c3298'
       tags:
       - lot
 
     - name: Set up line-of-time-api's dependencies
-      ansible.builtin.shell: cd /home/sprite/line-of-time-api && /.sprite/bin/npm install && cd line-of-time-fe && /.sprite/bin/npm install && /.sprite/bin/npm run build
+      ansible.builtin.shell: |
+        PATH=${PATH}:/home/linuxbrew/.linuxbrew/bin ; cd /home/chris/line-of-time-api && npm install && cd line-of-time-fe && npm install && npm run build
+      tags:
+      - lot
+
+    - name: Set up line-of-time-api's database
+      ansible.builtin.shell: |
+        PATH=${PATH}:/home/linuxbrew/.linuxbrew/bin ; cd /home/chris/line-of-time-api && ./build-schema-update.sh
       tags:
       - lot
