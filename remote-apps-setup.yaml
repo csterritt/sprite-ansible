@@ -31,6 +31,15 @@
         mode: '0700'
       tags:
       - apps
+
+    - name: Tap bun homebrew tap
+      ansible.builtin.shell:
+        cmd: |
+          brew tap oven-sh/bun
+      args:
+        creates: /home/linuxbrew/.linuxbrew/Homebrew/Library/Taps/oven-sh/homebrew-bun
+      tags:
+      - apps
     
     - name: Install Homebrew packages
       community.general.homebrew:
