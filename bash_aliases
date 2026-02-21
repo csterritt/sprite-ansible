@@ -24,6 +24,6 @@ alias trc="tr : '\012'"
 alias getdev='git checkout -b dev origin/dev && git pull'
 alias psa='ps auxwww'
 alias chk3k='lsof -ti:3000'
-alias useatuin='eval "$(atuin init bash)"'
+alias js='git status'
 
 export LESS='-RMIX'

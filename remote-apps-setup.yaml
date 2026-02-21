@@ -5,7 +5,6 @@
   become_user: chris
   vars:
     brew_packages:
-      - atuin
       - bun
       - cloudflare-wrangler
       - cloudflared

@@ -53,3 +53,25 @@
         PATH=${PATH}:/home/linuxbrew/.linuxbrew/bin ; cd /home/chris/line-of-time-api && ./build-schema-update.sh
       tags:
       - lot
+
+    - name: Install playwright browser
+      ansible.builtin.shell: |
+        PATH=${PATH}:/home/linuxbrew/.linuxbrew/bin ; cd /home/chris/line-of-time-api && npx playwright install chromium
+      tags:
+      - lot
+
+    - name: Copy install-chromium-deps.sh with owner and permissions
+      ansible.builtin.copy:
+        src: ./install-chromium-deps.sh
+        dest: /home/chris/install-chromium-deps.sh
+        owner: chris
+        group: chris
+        mode: '0700'
+      tags:
+      - files
+
+    - name: Run install-chromium-deps.sh
+      ansible.builtin.shell: |
+        sudo /home/chris/install-chromium-deps.sh
+      tags:
+      - lot
