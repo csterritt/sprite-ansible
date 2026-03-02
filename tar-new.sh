@@ -29,15 +29,20 @@ esac
 
 # Get list of new/modified files (excluding deleted files)
 # --diff-filter=ACMR: Added, Copied, Modified, Renamed
-if command -v mapfile >/dev/null 2>&1; then
-  mapfile -t files < <(git diff --name-only --diff-filter=ACMR HEAD)
-else
-  # Fallback for older bash versions
-  files=()
-  while IFS= read -r line; do
-    files+=("$line")
-  done < <(git diff --name-only --diff-filter=ACMR HEAD)
-fi
+# if command -v mapfile >/dev/null 2>&1; then
+#   mapfile -t files < <(git diff --name-only --diff-filter=ACMR HEAD)
+# else
+#   # Fallback for older bash versions
+#   files=()
+#   while IFS= read -r line; do
+#     files+=("$line")
+#   done < <(git diff --name-only --diff-filter=ACMR HEAD)
+# fi
+
+files=()
+while IFS= read -r line; do
+  files+=("$line")
+done < <(git status -sb | sed 1d | egrep -v '^D ' | /home/chris/chz 1)
 
 if [[ ${#files[@]} -eq 0 ]]; then
   echo "No new or modified files to archive."

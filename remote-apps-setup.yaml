@@ -31,6 +31,27 @@
       tags:
       - apps
 
+    - name: Install chz
+      ansible.builtin.copy:
+        src: /Users/chris/hacks/chz/tmp/chz
+        dest: /home/chris/chz
+        owner: chris
+        group: chris
+        mode: '0700'
+      tags:
+      - apps
+
+    - name: Install tar-new.sh
+      ansible.builtin.copy:
+        src: /Users/chris/hacks/run-books/tar-new.sh
+        dest: /home/chris/tar-new.sh
+        owner: chris
+        group: chris
+        mode: '0700'
+      tags:
+      - apps
+      - neww
+
     - name: Tap bun homebrew tap
       ansible.builtin.shell:
         cmd: |
