@@ -16,10 +16,14 @@
       register: dev_branch_count
       args:
         chdir: /home/chris/line-of-time-api
+      tags:
+      - always
 
     - name: Debug dev branch count
       debug:
         msg: "Dev branch count: {{ dev_branch_count.stdout }}"
+      tags:
+      - always
 
     - name: Switch git branch for line-of-time-api
       ansible.builtin.shell: |
@@ -42,23 +46,25 @@
       tags:
       - lot
 
-    - name: Set up line-of-time-api's dependencies
-      ansible.builtin.shell: |
-        PATH=${PATH}:/home/linuxbrew/.linuxbrew/bin ; cd /home/chris/line-of-time-api && npm install && cd line-of-time-fe && npm install && npm run build
-      tags:
-      - lot
+    # - name: Set up line-of-time-api's dependencies
+    #   ansible.builtin.shell: |
+    #     PATH=${PATH}:/home/linuxbrew/.linuxbrew/bin ; cd /home/chris/line-of-time-api && /home/chris/.nvm/versions/node/v22.22.0/bin/npm install && cd line-of-time-fe && /home/chris/.nvm/versions/node/v22.22.0/bin/npm install && /home/chris/.nvm/versions/node/v22.22.0/bin/npm run build
+    #   tags:
+    #   - lot
 
-    - name: Set up line-of-time-api's database
-      ansible.builtin.shell: |
-        PATH=${PATH}:/home/linuxbrew/.linuxbrew/bin ; cd /home/chris/line-of-time-api && ./build-schema-update.sh
-      tags:
-      - lot
+    # - name: Set up line-of-time-api's database
+    #   ansible.builtin.shell: |
+    #     PATH=${PATH}:/home/linuxbrew/.linuxbrew/bin ; cd /home/chris/line-of-time-api && ./build-schema-update.sh
+    #   tags:
+    #   - lot
+    #   - pdep
 
-    - name: Install playwright browser
-      ansible.builtin.shell: |
-        PATH=${PATH}:/home/linuxbrew/.linuxbrew/bin ; cd /home/chris/line-of-time-api && npx playwright install chromium
-      tags:
-      - lot
+    # - name: Install playwright browser
+    #   ansible.builtin.shell: |
+    #     PATH=${PATH}:/home/linuxbrew/.linuxbrew/bin ; cd /home/chris/line-of-time-api && npx playwright install chromium
+    #   tags:
+    #   - playwright
+    #   - pdep
 
     - name: Copy install-chromium-deps.sh with owner and permissions
       ansible.builtin.copy:
@@ -68,10 +74,12 @@
         group: chris
         mode: '0700'
       tags:
-      - files
+      - playwright
+      - pdep
 
-    - name: Run install-chromium-deps.sh
-      ansible.builtin.shell: |
-        sudo /home/chris/install-chromium-deps.sh
-      tags:
-      - lot
+    # - name: Run install-chromium-deps.sh
+    #   ansible.builtin.shell: |
+    #     sudo /home/chris/install-chromium-deps.sh
+    #   tags:
+    #   - playwright
+    #   - pdep
