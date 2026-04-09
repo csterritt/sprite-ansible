@@ -1,0 +1,100 @@
+---
+- name: Set up delphi-1 apps
+  hosts: delphi-1
+  become: true
+  become_user: ubuntu
+  vars:
+    brew_packages:
+      - bun
+      - eza
+      - gcc
+      - git
+      - jj
+      - lsof
+      - ripgrep
+      - sqlite
+      - sqlite-utils
+      - wget
+
+  tasks:
+    - name: Copy bash_aliases file for ubuntu with owner and permissions
+      ansible.builtin.copy:
+        src: ./bash_aliases
+        dest: /home/ubuntu/.bash_aliases
+        owner: ubuntu
+        group: ubuntu
+        mode: '0600'
+      tags:
+      - files
+
+    - name: Install notify-app
+      ansible.builtin.copy:
+        src: /Users/chris/hacks/notifier/notify-app/tmp/amd/notify-app
+        dest: /home/ubuntu/notify-app
+        owner: ubuntu
+        group: ubuntu
+        mode: '0700'
+      tags:
+      - apps
+
+    - name: Install chz
+      ansible.builtin.copy:
+        src: /Users/chris/hacks/chz/tmp/amd/chz
+        dest: /home/ubuntu/chz
+        owner: ubuntu
+        group: ubuntu
+        mode: '0700'
+      tags:
+      - apps
+
+    - name: Install tar-new.sh
+      ansible.builtin.copy:
+        src: /Users/chris/hacks/run-books/tar-new.sh
+        dest: /home/ubuntu/tar-new.sh
+        owner: ubuntu
+        group: ubuntu
+        mode: '0700'
+      tags:
+      - apps
+      - neww
+
+    # - name: install homebrew
+    #   ansible.builtin.shell:
+    #     cmd: |
+    #       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    #       echo >> /home/ubuntu/.bashrc
+    #       echo 'source .bash_aliases' >> /home/ubuntu/.bashrc
+    #       echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"' >> /home/ubuntu/.bashrc
+    #   args:
+    #     creates: /home/linuxbrew/.linuxbrew/bin/brew
+    #   tags:
+      - apps
+
+    - name: Tap bun homebrew tap
+      ansible.builtin.shell:
+        cmd: |
+          /home/linuxbrew/.linuxbrew/bin/brew tap oven-sh/bun
+      args:
+        creates: /home/linuxbrew/.linuxbrew/Homebrew/Library/Taps/oven-sh/homebrew-bun
+      tags:
+      - apps
+
+    - name: Ensure .bashrc sets up homebrew paths
+      ansible.builtin.lineinfile:
+        path: /home/ubuntu/.bashrc
+        line: 'export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"'
+      tags:
+      - files
+
+    - name: Ensure .bashrc sources .bash_aliases
+      ansible.builtin.lineinfile:
+        path: /home/ubuntu/.bashrc
+        line: 'source ~/.bash_aliases'
+      tags:
+      - files
+
+    - name: Install Homebrew packages
+      community.general.homebrew:
+        name: "{{ brew_packages }}"
+        state: present
+      # If you don't use FQCN and have the plugin installed, this can be just `homebrew:`

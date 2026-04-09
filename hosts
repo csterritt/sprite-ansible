@@ -1,2 +1,2 @@
-utmbox ansible_host=utmtwo ansible_port=22 ansible_user=chris
-# new-hetzner ansible_host=178.156.251.50 ansible_port=22 ansible_user=root ansible_ssh_private_key_file=~/.ssh/id_ed25519_chris_hetz
+# utmbox ansible_host=utmtwo ansible_port=22 ansible_user=chris
+delphi-1 ansible_host=delphi-1 ansible_port=22 ansible_user=ubuntu

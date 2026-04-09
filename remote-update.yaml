@@ -1,0 +1,36 @@
+---
+- name: Set up delphi-1 apps
+  hosts: delphi-1
+  become: true
+  become_user: ubuntu
+
+  tasks:
+    - name: Update apt
+      ansible.builtin.apt:
+        update_cache: yes
+      tags:
+      - always
+      - apt
+
+    - name: perform dist-upgrade
+      ansible.builtin.apt:
+        upgrade: dist
+      tags:
+      - always
+      - apt
+
+    - name: Update brew and package lists
+      ansible.builtin.shell:
+        cmd: |
+          brew update
+      tags:
+      - always
+      - brew
+
+    - name: Upgrade brew packages
+      ansible.builtin.shell:
+        cmd: |
+          brew upgrade
+      tags:
+      - always
+      - brew

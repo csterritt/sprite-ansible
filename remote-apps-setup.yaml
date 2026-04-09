@@ -23,7 +23,7 @@
   tasks:
     - name: Install notify-app
       ansible.builtin.copy:
-        src: /Users/chris/hacks/notifier/notify-app/tmp/notify-app
+        src: /Users/chris/hacks/notifier/notify-app/tmp/arm/notify-app
         dest: /home/chris/notify-app
         owner: chris
         group: chris
@@ -33,7 +33,7 @@
 
     - name: Install chz
       ansible.builtin.copy:
-        src: /Users/chris/hacks/chz/tmp/chz
+        src: /Users/chris/hacks/chz/tmp/arm/chz
         dest: /home/chris/chz
         owner: chris
         group: chris

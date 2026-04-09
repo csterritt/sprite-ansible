@@ -49,6 +49,6 @@ has 'tag:devbox', otherwise use its three-dots menu to add it.
 
 try ssh'ing in, if that doesn't work, try:
 
-    sudo tailscale set --ssh=false
+    sudo tailscale set --ssh=true
     ...try ssh...
     sudo tailscale set --ssh=false
