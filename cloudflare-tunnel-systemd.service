@@ -1,0 +1,19 @@
+# /etc/systemd/system/cloudflare-tunnel.service
+[Unit]
+Description=Cloudflare Tunnel
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=30
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+ExecStart=/home/ubuntu/scripts/start-cloudflare-tunnel.sh
+WorkingDirectory=/home/ubuntu/scripts
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

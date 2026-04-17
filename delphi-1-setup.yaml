@@ -2,7 +2,7 @@
 - name: Set up delphi-1 apps
   hosts: delphi-1
   become: true
-  become_user: ubuntu
+  # become_user: ubuntu
   vars:
     brew_packages:
       - bun
@@ -15,6 +15,24 @@
       - sqlite
       - sqlite-utils
       - wget
+      - cloudflared
+    lbb_source_files:
+      - .env
+      - .env.template
+      - .gitignore
+      - .oxfmtrc.json
+      - bun.lock
+      - e2e-tests/
+      - leaderboard.db
+      - LICENSE.txt
+      - Notes/
+      - Notes.md
+      - package.json
+      - README.md
+      - src/
+      - tests/
+      - tsconfig.json
+      - vitest.config.ts
 
   tasks:
     - name: Copy bash_aliases file for ubuntu with owner and permissions
@@ -56,19 +74,6 @@
         mode: '0700'
       tags:
       - apps
-      - neww
-
-    # - name: install homebrew
-    #   ansible.builtin.shell:
-    #     cmd: |
-    #       /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    #       echo >> /home/ubuntu/.bashrc
-    #       echo 'source .bash_aliases' >> /home/ubuntu/.bashrc
-    #       echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv bash)"' >> /home/ubuntu/.bashrc
-    #   args:
-    #     creates: /home/linuxbrew/.linuxbrew/bin/brew
-    #   tags:
-      - apps
 
     - name: Tap bun homebrew tap
       ansible.builtin.shell:
@@ -97,4 +102,85 @@
       community.general.homebrew:
         name: "{{ brew_packages }}"
         state: present
-      # If you don't use FQCN and have the plugin installed, this can be just `homebrew:`
+
+    - name: Copy lbb source files
+      ansible.builtin.copy:
+        src: /Users/chris/hacks/discord-bot/leaderboard-bot/{{ item }}
+        dest: /home/ubuntu/leaderboard-bot/{{ item }}
+        owner: ubuntu
+        group: ubuntu
+        mode: '0600'
+      loop: "{{ lbb_source_files }}"
+      tags:
+      - files
+
+    - name: Copy dot_env file for scripts
+      ansible.builtin.copy:
+        src: ./dot_env
+        dest: /home/ubuntu/scripts/.env
+        owner: ubuntu
+        group: ubuntu
+        mode: '0600'
+      tags:
+      - files
+      - scripts
+
+    - name: Copy cloudflared tunnel start script with owner and permissions
+      ansible.builtin.copy:
+        src: ./start-cloudflare-tunnel.sh
+        dest: /home/ubuntu/scripts/start-cloudflare-tunnel.sh
+        owner: ubuntu
+        group: ubuntu
+        mode: '0700'
+      tags:
+      - files
+      - scripts
+
+    - name: Copy leaderboard-bot start script with owner and permissions
+      ansible.builtin.copy:
+        src: ./start-leaderboard-bot.sh
+        dest: /home/ubuntu/scripts/start-leaderboard-bot.sh
+        owner: ubuntu
+        group: ubuntu
+        mode: '0700'
+      tags:
+      - files
+      - scripts
+
+    - name: Copy cloudflare-tunnel systemd service file
+      ansible.builtin.copy:
+        src: ./cloudflare-tunnel-systemd.service
+        dest: /etc/systemd/system/cloudflare-tunnel.service
+        owner: root
+        group: root
+        mode: '0644'
+      tags:
+      - files
+      - scripts
+
+    - name: Enable and start cloudflare-tunnel service
+      ansible.builtin.systemd_service:
+        name: cloudflare-tunnel
+        enabled: true
+        state: started
+      tags:
+      - services
+
+    - name: Copy leaderboard-bot systemd service file
+      ansible.builtin.copy:
+        src: ./leaderboard-bot-systemd.service
+        dest: /etc/systemd/system/leaderboard-bot.service
+        owner: root
+        group: root
+        mode: '0644'
+      tags:
+      - files
+      - scripts
+
+    - name: Enable and start leaderboard-bot service
+      ansible.builtin.systemd_service:
+        name: leaderboard-bot
+        enabled: true
+        state: started
+      tags:
+      - services

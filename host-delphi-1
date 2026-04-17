@@ -1,2 +1,1 @@
-# utmbox ansible_host=utmtwo ansible_port=22 ansible_user=chris
 delphi-1 ansible_host=delphi-1 ansible_port=22 ansible_user=ubuntu
